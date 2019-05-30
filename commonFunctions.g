@@ -6,6 +6,7 @@
 
 # Global variables
 complexEquivalent := NewDictionary( [], true ); # complex irreducible character corresponding to a given real irreducible
+complexIrreducibles := []; # characters of complex irreducible representations
 realIrreducibles := []; # characters of real irreducible representations
 dimensionsRealModules := []; # dimensions of real irreducible representations
 realIrrOfDim := []; # real irreducible characters of a given dimenension
@@ -27,6 +28,7 @@ end;
 realIrr := function( G )
 	local irr, ir, row, cl, ind, complexIrr, complexirr, check, n, considered, i, trivialModule;
 	irr := Irr( G );
+	complexIrreducibles := irr;
 	complexIrr := [];
 	complexEquivalent := NewDictionary( [], true );
 	realIrreducibles := [];
