@@ -19,6 +19,8 @@ pseudocyclicSubgroups :=[]; # pseudocyclic subgroups of G
 condition3SubgroupPairs := []; # pairs of subgroups of a group G of the form (H,K) where H is pseudocyclic and H<K
 smallestNormalSubgroupsQuotientPGroup := NewDictionary( 1, true ); # OpG subgroups for a group G - for the definition, see [1]
 largeSubgroups := []; # large subgroups of G
+elementsOfPrimePowerOrder := []; # elements of G of prime power order
+complexIrreducibleRepresentations := []; # complex irreducible representations affording complex irreducible characters
 # Remark: all the subgroup tuples are determined up to conjugacy since it does not affect fixed point dimensions.
 
 # Condition (1) function.
@@ -107,17 +109,17 @@ verifyCondition2 := function( U, W, G )
 	local P, H;
 	for P in pSubgroups do
 		if fixedPointDimensionRealModule( U, P, G )+fixedPointDimensionRealModule( W, P, G ) < 5 then
-			Display( U );
-			Display( W );
-			Print( fixedPointDimensionRealModule( U, P, G )+fixedPointDimensionRealModule( W, P, G ), "a\n" );
+			#Display( U );
+			#Display( W );
+			#Print( fixedPointDimensionRealModule( U, P, G )+fixedPointDimensionRealModule( W, P, G ), "a\n" );
 			return false;
 		fi;
 	od;
 	for H in pseudocyclicSubgroups do
 		if fixedPointDimensionRealModule( U, H, G )+fixedPointDimensionRealModule( W, H, G ) < 2 then
-			Display( U );
-			Display( W );
-			Print( fixedPointDimensionRealModule( U, H, G )+fixedPointDimensionRealModule( W, H, G ), "b\n" );
+			#Display( U );
+			#Display( W );
+			#Print( fixedPointDimensionRealModule( U, H, G )+fixedPointDimensionRealModule( W, H, G ), "b\n" );
 			return false;
 		fi;
 	od;
@@ -228,11 +230,10 @@ verifyCondition4 := function( U, W, G )
 	return true;
 end;
 
-# Condition (5) main function. # TO VERIFY
-# Checks the P-orientability for an RG module U+W.
-# Requires realIrr( G ) to be called earlier.
-verifyPOrientabilityModule := function( U, W, G )
-	local cl, g, complexIrrRep, elementsOfPrimePowerOrder, determinant, component;
+# Condition (5) function.
+# Determines elements of G of prime power order up to conjugacy.
+determineElementsOfPrimePowerOrder := function( G )
+	local cl, g;
 	elementsOfPrimePowerOrder := [];
 	for cl in ConjugacyClasses( G ) do
 		g := Representative( cl );
@@ -240,19 +241,49 @@ verifyPOrientabilityModule := function( U, W, G )
 			Add( elementsOfPrimePowerOrder, g );
 		fi;
 	od;
+end;
+
+# Condition (5) function.
+# Determines complex irreducible representations affording complex irreducible characters.
+determineComplexIrreducibleRepresentations := function( G )
+	local irr;
+	complexIrreducibleRepresentations := [];
+	for irr in complexIrreducibles do
+		Add( complexIrreducibleRepresentations, IrreducibleRepresentationsDixon( G, irr ) );
+	od;
+end;
+
+# Condition (5) main function. # TO VERIFY
+# Checks the P-orientability for an RG module U+W.
+# Requires realIrr( G ), determineElementsOfPrimePowerOrder( G ) and 
+# determineComplexIrreducibleRepresentations( G ) to be called earlier.
+verifyPOrientabilityModule := function( U, W, G )
+	local g, determinant, component, characterUW, i, coefficients, complexIrrRep;
+	characterUW := [];
+	for i in [1..Size( realIrreducibles )] do
+		Add( characterUW, 0 );
+	od;
+	for component in U do
+		for i in [1..Size( component[1] )] do
+			characterUW[i] := characterUW[i]+component[1][i]*component[2];
+		od;
+	od;
+	for component in W do
+		for i in [1..Size( component[1] )] do
+			characterUW[i] := characterUW[i]+component[1][i]*component[2];
+		od;
+	od;
+	coefficients := SolutionMat( complexIrreducibles, characterUW );
+	i := 1;
 	for g in elementsOfPrimePowerOrder do
 		determinant := 1;
-		for component in U do
-			determinant := determinant*DeterminantMat( 
-							Image( LookupDictionary( complexEquivalent, component[1] ), g ) )^component[2];
-		od;
-		for component in W do
-			determinant := determinant*DeterminantMat( 
-							Image( LookupDictionary( complexEquivalent, component[1] ), g ) )^component[2];
+		for complexIrrRep in complexIrreducibleRepresentations do
+			determinant := determinant*DeterminantMat( Image( complexIrrRep, g ) )^coefficients[i];
 		od;
 		if determinant < 0 then
 			return false;
 		fi;
+		i := i+1;
 	od;
 	return true;
 end;
@@ -274,6 +305,8 @@ initializeSubgroupTuples := function( G )
 	determinePSubgroups( G );
 	determinePseudocyclicSubgroups( G );
 	determineLargeSubgroups( G );
+	determineElementsOfPrimePowerOrder( G );
+	determineComplexIrreducibleRepresentations( G );
 end;
 
 # For a given smith set element U-V, computes W s.t. U+W and V+W # TO VERIFY
