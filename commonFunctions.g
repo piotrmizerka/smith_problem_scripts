@@ -1,13 +1,17 @@
-complexEquivalent := NewDictionary( [], true );
-realIrreducibles := [];
-dimensionsRealModules := [];
-realIrrOfDim := [];
-numberRealIrrOfDim := [];
-realIrrNr := NewDictionary( [], true );
-realIrrNrReversed := NewDictionary( 1, true );
-realModulesGivenDimension := [];
-dimensionTable := [];
-dimensionValues := [];
+# File containing functions used by at least 2 different files.
+# Load at the beginning.
+
+# To load this file paste this line (change the directory if necessary),
+# Read( Filename( DirectoryDesktop(), "commonFunctions.g" ) );
+
+# Global variables
+complexEquivalent := NewDictionary( [], true ); # complex irreducible character corresponding to a given real irreducible
+realIrreducibles := []; # characters of real irreducible representations
+dimensionsRealModules := []; # dimensions of real irreducible representations
+realIrrOfDim := []; # real irreducible characters of a given dimenension
+numberRealIrrOfDim := []; # number of real irreducible representations of a given dimension
+realIrrNr := NewDictionary( [], true ); # idies of real irreducible representations
+realIrrNrReversed := NewDictionary( 1, true ); # real irreducible characters for a given id
 
 frobeniusSchurIndicator := function( chi, G )
 	local result, cl, repr;
@@ -98,4 +102,26 @@ realIrr := function( G )
 			considered[ir[1]] := true;
 		fi;
 	od;
+end;
+
+fixedPointDimensionIrr := function( ir, H, G )
+	local result, h;
+	result := 0;
+	for h in H do
+		result := result+h^ir;
+	od;
+	result := result/Order( H );
+	if frobeniusSchurIndicator( ir, G ) <> 1 then
+		result := result*2;
+	fi;
+	return result;
+end;
+
+fixedPointDimensionRealModule := function( realModule, H, G )
+	local result, irrComponent;
+	result := 0;
+	for irrComponent in realModule do
+		result := result+fixedPointDimensionIrr( LookupDictionary( complexEquivalent, irrComponent[1] ), H, G )*irrComponent[2];
+	od;
+	return result;
 end;

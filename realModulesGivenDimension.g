@@ -5,6 +5,9 @@
 
 Read( Filename( DirectoryDesktop(), "commonFunctions.g" ) );
 
+# Global variables
+realModulesGivenDimension := []; # RG-modules of a given dimension
+
 # Auxiliary function computing for a given tuple of positive integers, [a1,...,an]
 # all the tuples [b1,...,bn] of positive integers with bi<=ai for i=1,...,n
 restrictedTuples := function( restrictions )
