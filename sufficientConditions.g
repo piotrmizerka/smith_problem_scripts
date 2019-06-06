@@ -21,6 +21,11 @@ smallestNormalSubgroupsQuotientPGroup := NewDictionary( 1, true ); # OpG subgrou
 largeSubgroups := []; # large subgroups of G
 elementsOfPrimePowerOrder := []; # elements of G of prime power order
 complexIrreducibleRepresentations := []; # complex irreducible representations affording complex irreducible characters
+constraintsCondition1 := [];
+constraintsCondition2 := [];
+constraintsCondition3 := [];
+constraintsCondition4 := [];
+constraints := [];
 # Remark: all the subgroup tuples are determined up to conjugacy since it does not affect fixed point dimensions.
 
 # Condition (1) function.
@@ -38,22 +43,6 @@ determineCondition1SubgroupPairs := function( G )
 			fi;
 		od;
 	od;
-end;
-
-# Condition (1) main function. # TO VERIFY
-# Checks the weak gap hypothesis (condition (1)) for an RG-module U+W.
-# Requires realIrr( G ) and determineCondition1SubgroupPairs( G ) to be called earlier.
-verifyGapHypothesisModule := function( U, W, G )
-	local PHPair, P, H;
-	for PHPair in condition1SubgroupPairs do
-		P := PHPair[1];
-		H := PHPair[2];
-		if fixedPointDimensionRealModule( U, P, G )+fixedPointDimensionRealModule( W, P, G ) < 
-		   2*(fixedPointDimensionRealModule( U, H, G )+fixedPointDimensionRealModule( W, H, G )) then
-			return false;
-		fi;
-	od;
-	return true;
 end;
 
 # Condition (2) auxilary function.
@@ -102,30 +91,6 @@ determinePSubgroups := function( G )
 	od;
 end;
 
-# Condition (2) main function.
-# Checks the condition (2) for an RG-module U+W # TO VERIFY
-# Requires realIrr( G ), determinePseudocyclicSubgroups( G ) and determinePSubgroups( G ) to be called earlier.
-verifyCondition2 := function( U, W, G )
-	local P, H;
-	for P in pSubgroups do
-		if fixedPointDimensionRealModule( U, P, G )+fixedPointDimensionRealModule( W, P, G ) < 5 then
-			#Display( U );
-			#Display( W );
-			#Print( fixedPointDimensionRealModule( U, P, G )+fixedPointDimensionRealModule( W, P, G ), "a\n" );
-			return false;
-		fi;
-	od;
-	for H in pseudocyclicSubgroups do
-		if fixedPointDimensionRealModule( U, H, G )+fixedPointDimensionRealModule( W, H, G ) < 2 then
-			#Display( U );
-			#Display( W );
-			#Print( fixedPointDimensionRealModule( U, H, G )+fixedPointDimensionRealModule( W, H, G ), "b\n" );
-			return false;
-		fi;
-	od;
-	return true;
-end;
-
 # Condition (3) function.
 # Determines pairs of subgroups of G (up to conjugacy) of the form [H,K] where H i pseudocyclic and H<K.
 # Saves the result in the global variable "condition3SubgroupPairs".
@@ -141,22 +106,6 @@ determineCondition3SubgroupPairs := function( G )
 			fi;
 		od;
 	od;
-end;
-
-# Condition (3) main function. # TO VERIFY
-# Checks the condition (3) for an RG-module U+W. 
-# Requires realIrr( G ) and determineCondition3SubgroupPairs( G ) to be called earlier.
-verifyCondition3 := function( U, W, G )
-	local HKPair, H, K;
-	for HKPair in condition3SubgroupPairs do
-		H := HKPair[1];
-		K := HKPair[2];
-		if fixedPointDimensionRealModule( U, H, G )+fixedPointDimensionRealModule( W, H, G ) = 
-		   fixedPointDimensionRealModule( U, K, G )+fixedPointDimensionRealModule( W, K, G ) then
-			return false;
-		fi;
-	od;
-	return true;
 end;
 
 # Condition (4) function.
@@ -187,7 +136,7 @@ determineSmallestNormalSubgroupsQuotientPGroup := function( G )
 end;
 
 # Condition (4) function.
-# Checks if a subgroup L of a group G is its large subgroup
+# Checks if a proper subgroup L of a group G is its large subgroup
 # (for the definition of a large subgroup, see [1]).
 # Requires "determineSmallestNormalSubgroupsQuotientPGroup( G )" to be called earlier.
 isLargeSubgroup := function( L, G )
@@ -202,9 +151,10 @@ isLargeSubgroup := function( L, G )
 end;
 
 # Condition (4) function.
-# Determines the large subgroups of a group G which are the representatives of 
+# Determines the large proper subgroups of a group G which are the representatives of 
 # its conjgacy classes of subgroups (we restrict to conjugacy classes since the fixed point dimension is constant on them).
 # Saves the result in the global variable "largeSubgroups" which is a list of subgroups of G.
+# Requires "determineSmallestNormalSubgroupsQuotientPGroup( G )" to be called earlier.
 determineLargeSubgroups := function( G )
 	local cl, L;
 	determineSmallestNormalSubgroupsQuotientPGroup( G );
@@ -215,19 +165,6 @@ determineLargeSubgroups := function( G )
 			Add( largeSubgroups, L );
 		fi;
 	od;
-end;
-
-# Condition (4) main function.
-# Checks the condition (4) for for an RG-module U+W.
-# Requires realIrr( G ) and determineLargeSubgroups( G ) to be called earlier.
-verifyCondition4 := function( U, W, G )
-	local L;
-	for L in largeSubgroups do
-		if fixedPointDimensionRealModule( U, L, G )+fixedPointDimensionRealModule( W, L, G ) > 0 then
-			return false;
-		fi;
-	od;
-	return true;
 end;
 
 # Condition (5) function.
@@ -260,7 +197,7 @@ end;
 verifyPOrientabilityModule := function( U, W, G )
 	local g, determinant, component, characterUW, i, coefficients, complexIrrRep;
 	characterUW := [];
-	for i in [1..Size( realIrreducibles )] do
+	for i in [1..Size( realIrreducibles[1] )] do
 		Add( characterUW, 0 );
 	od;
 	for component in U do
@@ -288,93 +225,111 @@ verifyPOrientabilityModule := function( U, W, G )
 	return true;
 end;
 
-# Computes the dimension of a real module
-dimensionRealModule := function( realModule )
-	local result, component;
-	result := 0;
-	for component in realModule do
-		result := result+component[1][1]*component[2];
+# Determines constraints for weak gap hyopthesis for integer linear programming.
+# Requires realIrr( G ) and determineCondition1SubgroupPairs( G ) to be called earlier
+constraintsGapHypothesis := function( G )
+	local pair, H, P, irr, constraint, dimP, dimH;
+	constraintsCondition1 := [];
+	for pair in condition1SubgroupPairs do
+		P := pair[1];
+		H := pair[2];
+		constraint := [];
+		for irr in realIrreducibles do
+			dimP := fixedPointDimensionRealModule( [[irr,1]], P, G );
+			dimH := fixedPointDimensionRealModule( [[irr,1]], H, G );
+			Add( constraint, dimP-2*dimH );
+		od;
+		Add( constraint, ">=" );
+		Add( constraint, 0 );
+		Add( constraintsCondition1, constraint );
 	od;
-	return result;
 end;
 
-# Initializes subgroup tuples for G
-initializeSubgroupTuples := function( G )
+# Determines constraints for the condition 2 for integer linear programming.
+# Requires realIrr( G ), determinePseudocyclicSubgroups( G ) and
+# determinePSubgroups( G ) to be called earlier
+constraintsCondition2 := function( G )
+	local H, P, irr, constraint, dim;
+	constraintsCondition2 := [];
+	for P in pSubgroups do
+		constraint := [];
+		for irr in realIrreducibles do
+			dim := fixedPointDimensionRealModule( [[irr,1]], P, G );
+			Add( constraint, dim );
+		od;
+		Add( constraint, ">=" );
+		Add( constraint, 5 );
+		Add( constraintsCondition2, constraint );
+	od;
+	for H in pseudocyclicSubgroups do
+		constraint := [];
+		for irr in realIrreducibles do
+			dim := fixedPointDimensionRealModule( [[irr,1]], H, G );
+			Add( constraint, dim );
+		od;
+		Add( constraint, ">=" );
+		Add( constraint, 2 );
+		Add( constraintsCondition2, constraint );
+	od;
+end;
+
+# Determines constraints for the condition 3 for integer linear programming.
+# Requires realIrr( G ) and determineCondition1SubgroupPairs( G ) to be called earlier
+constraintsCondition3 := function( G )
+	local pair, H, K, irr, constraint, dimH, dimK;
+	constraintsCondition3 := [];
+	for pair in condition3SubgroupPairs do
+		H := pair[1];
+		K := pair[2];
+		constraint := [];
+		for irr in realIrreducibles do
+			dimH := fixedPointDimensionRealModule( [[irr,1]], H, G );
+			dimK := fixedPointDimensionRealModule( [[irr,1]], K, G );
+			Add( constraint, dimH-dimK );
+		od;
+		Add( constraint, ">=" );
+		Add( constraint, 1 );
+		Add( constraintsCondition3, constraint );
+	od;
+end;
+
+# Determines constraints for the condition 4 for integer linear programming.
+# Requires realIrr( G ), "determineSmallestNormalSubgroupsQuotientPGroup( G )"
+# and determineLargeSubgroups( G ) to be called earlier (in that order).
+constraintsCondition4 := function( G )
+	local L, irr, constraint, dim;
+	constraintsCondition4 := [];
+	for L in largeSubgroups do
+		constraint := [];
+		for irr in realIrreducibles do
+			dim := fixedPointDimensionRealModule( [[irr,1]], L, G );
+			Add( constraint, dim );
+		od;
+		Add( constraint, "=" );
+		Add( constraint, 0 );
+		Add( constraintsCondition4, constraint );
+	od;
+end;
+
+# Requires realIrr( G ) to be defined earlier
+determineConstraints := function( G )
 	determineCondition1SubgroupPairs( G );
 	determineCondition3SubgroupPairs( G );
 	determinePSubgroups( G );
 	determinePseudocyclicSubgroups( G );
+	determineSmallestNormalSubgroupsQuotientPGroup( G );
 	determineLargeSubgroups( G );
 	determineElementsOfPrimePowerOrder( G );
 	determineComplexIrreducibleRepresentations( G );
-end;
-
-# For a given smith set element U-V, computes W s.t. U+W and V+W # TO VERIFY
-# satisfy the conditions (1)-(4) and dim(U+W)=dim(V+W) is minimized.
-# The "smithSetElement" U-V is given in the base of RO(G) which are the real irreducible representations of G.
-# U-V is read from the file "smithSetsElements.g" which should be in the Desktop directory (chagne if necessary).
-# Returns the result in the list format [dim(U+W),U,V,W].
-# Requires realIrr( G )and initializeSubgroupTuples( G ) to be called earlier.
-minimalGapModule := function( smithSetElement, G, dimensionUpperBound )
-	local U, V, W, n, coord, i;
-	U := [];
-	V := [];
-	i := 1;
-	for coord in smithSetElement do
-		if coord > 0 then
-			Add( U, [realIrreducibles[i],coord] );
-		elif coord < 0 then
-			Add( V, [realIrreducibles[i],-coord] );
-		fi;
-		i := i+1;
-	od;
-	if verifyGapHypothesisModule( U, [], G ) = true and verifyGapHypothesisModule( V, [], G ) = true and
-	   verifyCondition2( U, [], G ) = true and verifyCondition2( V, [], G ) = true and
-	   verifyCondition3( U, [], G ) = true and verifyCondition3( V, [], G ) = true and
-	   verifyCondition4( U, [], G ) = true and verifyCondition4( V, [], G ) = true and
-	   (verifyPOrientabilityModule( U, [], G ) = true or verifyPOrientabilityModule( V, [], G ) = true) then
-		return [dimensionRealModule( U ),U,V,[]];
-	fi;
-	for n in [1..(dimensionUpperBound-dimensionRealModule( U ))] do
-		#Display( n );
-		realModulesOfDimension( n );
-		for W in realModulesGivenDimension do
-			if verifyGapHypothesisModule( U, W, G ) = true and verifyGapHypothesisModule( V, W, G ) = true and
-			   verifyCondition2( U, W, G ) = true and verifyCondition2( V, W, G ) = true and
-			   verifyCondition3( U, W, G ) = true and verifyCondition3( V, W, G ) = true and
-			   verifyCondition4( U, W, G ) = true and verifyCondition4( V, W, G ) = true and
-			   (verifyPOrientabilityModule( U, W, G ) = true or verifyPOrientabilityModule( V, W, G ) = true) then
-				return [dimensionRealModule( U )+n,U,V,W];
-			fi;
-		od;
-	od;
-	return [];
-end;
-
-# Main function to call. 
-# Computes RG-modules U+W and V+W which satisfy the conditions (1)-(4).
-# Requires smith set elements to be already computed
-# and saved in the file "smithSetElements.g" in DirectoryDesktop() (change if necessary).
-minimalGapModuleGroup := function( G )
-	local i, gapRealization, minGapRealization;
-	realIrr( G );
-	initializeSubgroupTuples( G );
-	minGapRealization := [100,[],[],[]]; 
-	Read( Filename( DirectoryDesktop(), "smithSetElements.g" ) );
-	Print( "Number of PO red elts to consider: ", Size( smithSetElements ), "\n" );
-	for i in [1..Size( smithSetElements )] do
-		Print( "Id of element: ", i, "\n" );
-		if smithSetElements[i][2] >= minGapRealization[1] then
-			break;
-		fi;
-		gapRealization := minimalGapModule( smithSetElements[i][1], G, minGapRealization[1] );
-		if Size( gapRealization ) > 0 then
-			if gapRealization[1] < minGapRealization[1] then
-				minGapRealization := gapRealization;
-			fi;
-		fi;
-	od;
-	return minGapRealization;
+	constraints := [];
+	constraintsGapHypothesis( G );
+	constraintsCondition2( G );
+	constraintsCondition3( G );
+	constraintsCondition4( G );
+	Add( constraints, constraintsCondition1 );
+	Add( constraints, constraintsCondition2 );
+	Add( constraints, constraintsCondition3 );
+	Add( constraints, constraintsCondition4 );
 end;
 
 # REFERENCES
