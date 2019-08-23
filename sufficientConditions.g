@@ -332,68 +332,7 @@ determineConstraints := function( G )
 	Add( constraints, constraintsCondition4 );
 end;
 
-# TO VERIFY
-# Requires realIrr( G ) and determineConstraints( G ) to be called earlier.
-saveConstraintsAsSAGEFile := function( savePath, smithSetElement )
-	local constraint, i, j, U, V, Ux, Vx, P, H, dimP, dimH, rhs;
-	U := [];
-	V := [];
-	Ux := [];
-	Vx := [];
-	for i in [1..Size( smithSetElement )] do
-		if smithSetElement[i] > 0 then
-			U[i] := smithSetElement[i];
-			V[i] := 0;
-			Add( Ux, [realIrreducibles[i],smithSetElement[i]] );
-		else
-			U[i] := 0;
-			V[i] := -smithSetElement[i];
-			Add( Vx, [realIrreducibles[i],-smithSetElement[i]] );
-		fi;
-	od;
-	PrintTo( savePath, "equationSystem = MixedIntegerLinearProgram( maximization=False, solver = \"GLPK\" )\n" );
-	AppendTo( savePath, "x = equationSystem.new_variable( integer = True, nonnegative = True )\n\n\n" );
-	AppendTo( savePath, "#Constraints from gap hypothesis\n" );
-	for j in [1..Size( constraintsCondition1 )] do
-		appendConstraint1( savePath, j, Ux );
-		appendConstraint1( savePath, j, Vx );
-	od;
-	AppendTo( savePath, "\n#Constraints from condition 2\n" );
-	for j in [1..Size( pSubgroups )] do
-		appendConstraint2( savePath, j, (true), j, Ux );
-		appendConstraint2( savePath, j, (true), j, Vx );		
-	od;
-	for j in [1..Size( pseudocyclicSubgroups )] do
-		appendConstraint2( savePath, j+Size( pSubgroups ), false, j, Ux );
-		appendConstraint2( savePath, j+Size( pSubgroups ), false, j, Vx );		
-	od;
-	AppendTo( savePath, "\n#Constraints from condition 3\n" );
-	for j in [1..Size( constraintsCondition3 )] do
-		appendConstraint3( savePath, j, Ux );
-		appendConstraint3( savePath, j, Vx );
-	od;
-	AppendTo( savePath, "\n#Constraints from condition 4\n" );
-	for j in [1..Size( constraintsCondition4 )] do
-		appendConstraint4( savePath, j, Ux );
-		appendConstraint4( savePath, j, Vx );
-	od;
-	AppendTo( savePath, "\n\nequationSystem.set_objective( " );
-	for i in [1..Size( realIrreducibles )-1] do
-		AppendTo( savePath, realIrreducibles[i][1] );
-		AppendTo( savePath, "*x[" );
-		AppendTo( savePath, i-1 );
-		AppendTo( savePath, "]+" );
-	od;
-	AppendTo( savePath, realIrreducibles[Size( realIrreducibles )][1] );
-	AppendTo( savePath, "*x[" );
-	AppendTo( savePath, Size( realIrreducibles )-1 );
-	AppendTo( savePath, "] )\n\nequationSystemshow()\n" );
-	AppendTo( savePath, "\n\nprint( \'Objective Value: {}\'.format( equationSystem.solve() ) )\n" );
-	AppendTo( savePath, "for i, v in sorted( equationSystem.get_values( x ).items()):\n" );
-	AppendTo( savePath, "\tprint( \'w_\%s = \%s\' \% (i, int( round( v ) )) )" );
-end;
-
-appendConstraint1 := function( savePath, constraintId, realModule )
+appendConstraint1 := function( savePath, constraintId, realModule, G )
 	local i, P, H, dimP, dimH, rhs;
 	AppendTo( savePath, "equationSystem.add_constraint( " );
 	for i in [1..Size( constraintsCondition1[constraintId] )-3] do
@@ -416,12 +355,12 @@ appendConstraint1 := function( savePath, constraintId, realModule )
 	H := condition1SubgroupPairs[constraintId][2];
 	dimP := fixedPointDimensionRealModule( realModule, P, G );
 	dimH := fixedPointDimensionRealModule( realModule, H, G );
-	rhs := -2*dimP+dimH+constraintsCondition1[constraintId][Size( constraintsCondition1[constraintId] )];
+	rhs := -dimP+2*dimH+constraintsCondition1[constraintId][Size( constraintsCondition1[constraintId] )];
 	AppendTo( savePath, rhs );
 	AppendTo( savePath, " )\n" );
 end;
 
-appendConstraint2 := function( savePath, constraintId, check, subgroupId, realModule )
+appendConstraint2 := function( savePath, constraintId, check, subgroupId, realModule, G )
 	local i, P, H, dimP, dimH, rhs;
 	AppendTo( savePath, "equationSystem.add_constraint( " );
 	for i in [1..Size( constraintsCondition2[constraintId] )-3] do
@@ -453,7 +392,7 @@ appendConstraint2 := function( savePath, constraintId, check, subgroupId, realMo
 	AppendTo( savePath, " )\n" );
 end;
 
-appendConstraint3 := function( savePath, constraintId, realModule )
+appendConstraint3 := function( savePath, constraintId, realModule, G )
 	local i, H, K, dimH, dimK, rhs;
 	AppendTo( savePath, "equationSystem.add_constraint( " );
 	for i in [1..Size( constraintsCondition3[constraintId] )-3] do
@@ -481,7 +420,7 @@ appendConstraint3 := function( savePath, constraintId, realModule )
 	AppendTo( savePath, " )\n" );
 end;
 
-appendConstraint4 := function( savePath, constraintId, realModule )
+appendConstraint4 := function( savePath, constraintId, realModule, G )
 	local i, L, dimL, rhs;
 	AppendTo( savePath, "equationSystem.add_constraint( " );
 	for i in [1..Size( constraintsCondition4[constraintId] )-3] do
@@ -507,11 +446,72 @@ appendConstraint4 := function( savePath, constraintId, realModule )
 	AppendTo( savePath, " )\n" );
 end;
 
+# TO VERIFY
+# Requires realIrr( G ) and determineConstraints( G ) to be called earlier.
+saveConstraintsAsSAGEFile := function( savePath, smithSetElement, G )
+	local constraint, i, j, U, V, Ux, Vx, P, H, dimP, dimH, rhs;
+	U := [];
+	V := [];
+	Ux := [];
+	Vx := [];
+	for i in [1..Size( smithSetElement )] do
+		if smithSetElement[i] > 0 then
+			U[i] := smithSetElement[i];
+			V[i] := 0;
+			Add( Ux, [realIrreducibles[i],smithSetElement[i]] );
+		else
+			U[i] := 0;
+			V[i] := -smithSetElement[i];
+			Add( Vx, [realIrreducibles[i],-smithSetElement[i]] );
+		fi;
+	od;
+	PrintTo( savePath, "equationSystem = MixedIntegerLinearProgram( maximization=False, solver = \"GLPK\" )\n" );
+	AppendTo( savePath, "x = equationSystem.new_variable( integer = True, nonnegative = True )\n\n\n" );
+	AppendTo( savePath, "#Constraints from gap hypothesis\n" );
+	for j in [1..Size( constraintsCondition1 )] do
+		appendConstraint1( savePath, j, Ux, G );
+		appendConstraint1( savePath, j, Vx, G );
+	od;
+	AppendTo( savePath, "\n#Constraints from condition 2\n" );
+	for j in [1..Size( pSubgroups )] do
+		appendConstraint2( savePath, j, (true), j, Ux, G );
+		appendConstraint2( savePath, j, (true), j, Vx, G );		
+	od;
+	for j in [1..Size( pseudocyclicSubgroups )] do
+		appendConstraint2( savePath, j+Size( pSubgroups ), false, j, Ux, G );
+		appendConstraint2( savePath, j+Size( pSubgroups ), false, j, Vx, G );		
+	od;
+	AppendTo( savePath, "\n#Constraints from condition 3\n" );
+	for j in [1..Size( constraintsCondition3 )] do
+		appendConstraint3( savePath, j, Ux, G );
+		appendConstraint3( savePath, j, Vx, G );
+	od;
+	AppendTo( savePath, "\n#Constraints from condition 4\n" );
+	for j in [1..Size( constraintsCondition4 )] do
+		appendConstraint4( savePath, j, Ux, G );
+		appendConstraint4( savePath, j, Vx, G );
+	od;
+	AppendTo( savePath, "\n\nequationSystem.set_objective( " );
+	for i in [1..Size( realIrreducibles )-1] do
+		AppendTo( savePath, realIrreducibles[i][1] );
+		AppendTo( savePath, "*x[" );
+		AppendTo( savePath, i-1 );
+		AppendTo( savePath, "]+" );
+	od;
+	AppendTo( savePath, realIrreducibles[Size( realIrreducibles )][1] );
+	AppendTo( savePath, "*x[" );
+	AppendTo( savePath, Size( realIrreducibles )-1 );
+	AppendTo( savePath, "] )\n\nequationSystem.show()\n" );
+	AppendTo( savePath, "\n\nprint( \'Objective Value: {}\'.format( equationSystem.solve() ) )\n" );
+	AppendTo( savePath, "for i, v in sorted( equationSystem.get_values( x ).items()):\n" );
+	AppendTo( savePath, "\tprint( \'w_\%s = \%s\' \% (i, int( round( v ) )) )" );
+end;
+
 # EXAMPLE
 G := SL( 2, 5 );
 realIrr( G );
 determineConstraints( G );
-saveConstraintsAsSAGEFile( "C:\\Users\\Piotrek\\Desktop\\test.sage", [-1,1,2,-2,0,0,0,0] );
+saveConstraintsAsSAGEFile( "C:\\Users\\Piotrek\\Desktop\\test.sage", [-1,1,2,-2,0,0,0,0], G );
 
 # REFERENCES
 # [1] M. Morimoto, K. Pawałowski, Smooth actions of finite Oliver groups on spheres,
