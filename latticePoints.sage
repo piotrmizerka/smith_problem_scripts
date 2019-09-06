@@ -1,9 +1,10 @@
-# cd Desktop - > load( "latticePoints.sage" )
+# To load this file separately, open the terminal in the "smith_problem_scripts" directory,
+# type "sage" and then "load( "latticePoints.sage" )"
 
 from sage.geometry.integral_points import simplex_points
 
 # Step 1. function.
-# Lattice points in a bounded convex neighborhood of the origin defined 
+# Lattice points in a bounded convex neighborhood of the origin defined
 # by 2^n simplices defined by "generatorVertices" and "scale" (here n is the number of "generatorVertices").
 # This region is a closed ball in the taxicab metric.
 def latticePoints( generatorVertices, scale ):
@@ -36,7 +37,7 @@ def latticePoints( generatorVertices, scale ):
  		resultxx = list( resultx )
 	return resultxx
 
-# Step 2. function. 
+# Step 2. function.
 # Computing the Eulcidean distance from the hyperplane spanned by "vertices" to the origin.
 def distanceFromOriginHyperplane( vertices ):
 	vectors = []
@@ -45,7 +46,7 @@ def distanceFromOriginHyperplane( vertices ):
 	bas = list( (matrix( RDF,vectors ).gram_schmidt())[0] )
 	return (vertices[0]-sum([(vertices[0]*x)*x for x in bas])).norm()
 
-# Step 2. function. 
+# Step 2. function.
 # Computing the Eulcidean distance from the boundary of the convex hull spanned by "generatorVertices"
 def distanceFromOrigin( generatorVertices ):
 	simplexTuples = Tuples( [-1,1], len( generatorVertices ) ).list()
@@ -65,9 +66,9 @@ def distanceFromOrigin( generatorVertices ):
 	return result
 
 # Step 3. function.
-# Finding the bounded region with at least one lattice point. 
+# Finding the bounded region with at least one lattice point.
 # We look for it over all $\Delta(\lambda)$ for $\lambda=1,...,"maxScale"$
-# Returns parameters "generatorVertices" and "i" for the bounded region 
+# Returns parameters "generatorVertices" and "i" for the bounded region
 # with lattice point if it was found together with the minimal lattice point found.
 # This is why we need "irreduciblesDimensions" as parameter.
 def boundedRegionLatticePoint( generatorVertices, maxScale, irreduciblesDimensions ):
@@ -87,7 +88,7 @@ def boundedRegionLatticePoint( generatorVertices, maxScale, irreduciblesDimensio
 
 # Step 4. function.
 # Enlarge the bounded region with lattice point so that it containes the minimal lattice point.
-# Parameters: 
+# Parameters:
 # - "generatorVertices" - generators of the reduced primary group
 # - "scaleLatticePoint" - the scale for which a lattice point was found - output from "boundedRegionLatticePoint"
 # - "minLatticePointFound" - minimal lattice point found by "boundedRegionLatticePoint"
@@ -110,7 +111,7 @@ def enlargedRegion( generatorVertices, scaleLatticePoint, minLatticePointFound, 
 # Output:
 # - minimal lattice point U-V and the dimension of RG-modules U and V
 def minimalLatticePoint( generatorVertices, irreduciblesDimensions, maxScale = 100 ):
-	[generatorVerticesx,scalex,latticePointx] = boundedRegionLatticePoint( generatorVertices, maxScale, 
+	[generatorVerticesx,scalex,latticePointx] = boundedRegionLatticePoint( generatorVertices, maxScale,
                                                                                irreduciblesDimensions )
 	adjustedScale = enlargedRegion( generatorVertices, scalex, latticePointx, irreduciblesDimensions )
 	latticePointsx = latticePoints( generatorVertices, adjustedScale )
@@ -145,9 +146,13 @@ def latticePointsUpToDimension( generatorVertices, irreduciblesDimensions, dimen
 			latticePointsxx.append( (norm/2,latticePoint) )
 	latticePointsxxx = sorted( latticePointsxx, key = lambda y: y[0] )
 	return latticePointsxx
-    
+
+# MAIN FUNCTION TO CALL
 # Saves to the gap file all the lattice points U-V for which dimU=dimV<="dimensionUpperBound".
-# These points may be used later by an appropriate GAP-procedure to establish which of them satisfy 
+# Ignores points which are the inverses of already existing lattice points (we choose only one
+# since the other will give exactly the same answer as the one which is its inverse - we choose
+# cannonically those with positive first nonzero coefficient).
+# These points may be used later by an appropriate GAP-procedure to establish which of them satisfy
 # the conditions providing existince of an exotic Smith action.
 # Parameters:
 # - "generatorVertices" - generators of the reduced primary group
@@ -155,18 +160,23 @@ def latticePointsUpToDimension( generatorVertices, irreduciblesDimensions, dimen
 # - "dimensionUpperBound" - upper bound for dimensions to look for
 def saveLatticePoints( generatorVertices, irreduciblesDimensions, dimensionUpperBound ):
 	latticePointsxxx = latticePointsUpToDimension( generatorVertices, irreduciblesDimensions, dimensionUpperBound )
-	save = open( "smith_set_elements.g", "w" )
-	save.write( "smithSetElements := [" )
+	save = open( "./group_data/lattice_points_red_po.g", "w" )
+	save.write( "latticePointsRedPO := [" )
 	for i in range( len( latticePointsxxx ) ):
-		if i > 0:
-			save.write( "," )
-		save.write( "[[" )
-		for j in range( 0, len( latticePointsxxx[i][1] )-1 ):
-			save.write( str( latticePointsxxx[i][1][j] )+"," )
-		save.write( str( latticePointsxxx[i][1][len( latticePointsxxx[i][1] )-1] )+"],"+str( latticePointsxxx[i][0] )+"]" )
+		firstNonZeroCoefficient = 0
+		while latticePointsxxx[i][1][firstNonZeroCoefficient] == 0:
+			firstNonZeroCoefficient += 1
+		if latticePointsxxx[i][1][firstNonZeroCoefficient] > 0:
+			if i > 0:
+				save.write( "," )
+			save.write( "[[" )
+			for j in range( 0, len( latticePointsxxx[i][1] )-1 ):
+				save.write( str( latticePointsxxx[i][1][j] )+"," )
+			save.write( str( latticePointsxxx[i][1][len( latticePointsxxx[i][1] )-1] )+"],"+str( latticePointsxxx[i][0] )+"]" )
 	save.write( "];" )
 	save.close()
-			
+
+# SAMPLE USAGE
 #lattice_points = latticePoints( [(1,0),(0,1)],3 )
 #print( len( lattice_points ) )
 #print( distanceFromOrigin( [(1,2,-10),(2,1,-10)] ) )
@@ -179,4 +189,3 @@ def saveLatticePoints( generatorVertices, irreduciblesDimensions, dimensionUpper
 #saveLatticePoints( [(1,-1,2,-1,-1,2,-4,2)],(6,8,6,12,12,7,8,16), 90 )
 #saveLatticePoints( [(2,0,0,-2,-1,1,0,0,0,0,0,0),(2,0,0,-2,-1,0,1,0,0,0,0,0),(-11,-5,-8,8,3,0,0,10,0,0,0,0),
 #(-12,0,-6,6,6,0,0,0,-5,0,10,0),(-12,0,-6,6,6,0,0,0,0,-5,0,10)],(10,12,10,10,20,20,20,11,24,24,12,12), 40 )
-	

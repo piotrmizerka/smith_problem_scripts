@@ -1,21 +1,18 @@
 # Functions responsible for determining the groups with Smith sets equal
-# to the reduced primary groups.
+# to the reduced primary groups or contained in them.
 
 # To load this file paste this line (change the directory if necessary),
-# Read( Filename( DirectoryDesktop(), "smithSetPORed.g" ) );
+# Read( Filename( [DirectoryCurrent(), DirectoryDesktop()], "smithSetPORed.g" ) );
 
-Read( Filename( DirectoryDesktop(), "commonFunctions.g" ) );
+# Requires "commonFunctions.g" to be called earlier. It can be called with the following command,
+# Read( Filename( [DirectoryCurrent(), DirectoryDesktop()], "commonFunctions.g" ) );
 
-# Main function to call. # TO VERIFY
-# Checks the sufficient conditions for a group G to have the reduced primary group
-# as the Smith set. For details, see [1,UZUPELNIC] and [1,UZUPELNIC]
+# TO VERIFY
+# Checks the sufficient conditions for a group G to have the Smith set contained
+# in the reduced primary group. For details, see [1,UZUPELNIC] and [1,UZUPELNIC]
 # Requires realIrr( G ) to be called earlier.
-hasPORedAsSmithSet := function( G )
+smithSetContainedInPORed := function( G )
 	local g, W, check, H, h;
-	if IsPerfect( G ) = false then
-		return false;
-	fi;
-	realIrr( G );
 	for g in G do
 		if IsPrimePowerInt( Order( g ) ) and ( Order( g ) mod 8 = 0 ) then
 			check := 0;
@@ -37,6 +34,18 @@ hasPORedAsSmithSet := function( G )
 		fi;
 	od;
 	return true;
+end;
+
+# TO VERIFY
+# Checks the sufficient conditions for a group G to have the reduced primary group
+# as the Smith set. For details, see [1,UZUPELNIC] and [1,UZUPELNIC]
+# Requires realIrr( G ) to be called earlier.
+hasPORedAsSmithSet := function( G )
+	local g, W, check, H, h;
+	if IsPerfect( G ) = false then
+		return false;
+	fi;
+	return smithSetContainedInPORed( G );
 end;
 
 # REFERENCES

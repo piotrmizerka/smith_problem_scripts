@@ -1,16 +1,19 @@
 # Functions responsible for finding an RG-modules V satisfying the following conditions,
 # (1) dimV^P >= 2dimV^H for any p-subgroup P of G and P<H<=G (weak gap hypothesis),
 # (2) dimV^P >= 5 and dimV^H >= 2 for any p-subgroup P of G and pseudocyclic subgroup H of G,
-# (3) every pseudocyclic subgroup occurs as an isotropy subgroup of the action of G 
+# (3) every pseudocyclic subgroup occurs as an isotropy subgroup of the action of G
 #	  on the considered RG-module V,
 # (4) V^L = {0} for every large subgroup of G,
 # (5) V is P-orientable.
 # For the definitions of the above concepts, see [1].
 
 # To load this file paste this line (change the directory if necessary),
-# Read( Filename( DirectoryDesktop(), "sufficientConditions.g" ) );
+# Read( Filename( [DirectoryCurrent(), DirectoryDesktop()], "sufficientConditions.g" ) );
 
-Read( Filename( DirectoryDesktop(), "realModulesGivenDimension.g" ) );
+# Requires "commonFunctions.g" and "realModulesGivenDimension.g" to be called earlier.
+# They can be called with the following commands,
+# Read( Filename( [DirectoryCurrent(), DirectoryDesktop()], "commonFunctions.g" ) );
+# Read( Filename( [DirectoryCurrent(), DirectoryDesktop()], "realModulesGivenDimension.g" ) );
 
 # Global variables
 condition1SubgroupPairs := []; # pairs of subgroups of a group G of the form (P,H) where P is a p-group and P<H
@@ -113,7 +116,7 @@ end;
 # Saves the result in the global variable "smallestNormalSubgroupsQuotientPGroup".
 determineSmallestNormalSubgroupsQuotientPGroup := function( G )
 	local N, quotient, smallestOrders, quotientOrder, p, primeDivisors, subgroupOrder;
-	smallestNormalSubgroupsQuotientPGroup := NewDictionary( 1, true ); 
+	smallestNormalSubgroupsQuotientPGroup := NewDictionary( 1, true );
 	smallestOrders := NewDictionary( 1, true );
 	for p in PrimeDivisors( Order( G ) ) do
 		AddDictionary( smallestOrders, p, 1000000 );
@@ -151,7 +154,7 @@ isLargeSubgroup := function( L, G )
 end;
 
 # Condition (4) function.
-# Determines the large proper subgroups of a group G which are the representatives of 
+# Determines the large proper subgroups of a group G which are the representatives of
 # its conjgacy classes of subgroups (we restrict to conjugacy classes since the fixed point dimension is constant on them).
 # Saves the result in the global variable "largeSubgroups" which is a list of subgroups of G.
 # Requires "determineSmallestNormalSubgroupsQuotientPGroup( G )" to be called earlier.
@@ -192,7 +195,7 @@ end;
 
 # Condition (5) main function. # TO VERIFY
 # Checks the P-orientability for an RG module U+W.
-# Requires realIrr( G ), determineElementsOfPrimePowerOrder( G ) and 
+# Requires realIrr( G ), determineElementsOfPrimePowerOrder( G ) and
 # determineComplexIrreducibleRepresentations( G ) to be called earlier.
 verifyPOrientabilityModule := function( U, W, G )
 	local g, determinant, component, characterUW, i, coefficients, complexIrrRep;
@@ -332,6 +335,8 @@ determineConstraints := function( G )
 	Add( constraints, constraintsCondition4 );
 end;
 
+# Appends constraints from condition 1 to sage file containing constraints for linear programming over the integers.
+# Requires realIrr( G ) and determineConstraints( G ) to be called earlier.
 appendConstraint1 := function( savePath, constraintId, realModule, G )
 	local i, P, H, dimP, dimH, rhs;
 	AppendTo( savePath, "equationSystem.add_constraint( " );
@@ -360,6 +365,8 @@ appendConstraint1 := function( savePath, constraintId, realModule, G )
 	AppendTo( savePath, " )\n" );
 end;
 
+# Appends constraints from condition 2 to sage file containing constraints for linear programming over the integers.
+# Requires realIrr( G ) and determineConstraints( G ) to be called earlier.
 appendConstraint2 := function( savePath, constraintId, check, subgroupId, realModule, G )
 	local i, P, H, dimP, dimH, rhs;
 	AppendTo( savePath, "equationSystem.add_constraint( " );
@@ -392,6 +399,8 @@ appendConstraint2 := function( savePath, constraintId, check, subgroupId, realMo
 	AppendTo( savePath, " )\n" );
 end;
 
+# Appends constraints from condition 3 to sage file containing constraints for linear programming over the integers.
+# Requires realIrr( G ) and determineConstraints( G ) to be called earlier.
 appendConstraint3 := function( savePath, constraintId, realModule, G )
 	local i, H, K, dimH, dimK, rhs;
 	AppendTo( savePath, "equationSystem.add_constraint( " );
@@ -420,6 +429,8 @@ appendConstraint3 := function( savePath, constraintId, realModule, G )
 	AppendTo( savePath, " )\n" );
 end;
 
+# Appends constraints from condition 4 to sage file containing constraints for linear programming over the integers.
+# Requires realIrr( G ) and determineConstraints( G ) to be called earlier.
 appendConstraint4 := function( savePath, constraintId, realModule, G )
 	local i, L, dimL, rhs;
 	AppendTo( savePath, "equationSystem.add_constraint( " );
@@ -446,9 +457,11 @@ appendConstraint4 := function( savePath, constraintId, realModule, G )
 	AppendTo( savePath, " )\n" );
 end;
 
-# TO VERIFY
+# Saves constraints determined by a given Smith set element of G and a minimal dimension
+# of real module W which should be added to U and V (U-V is the considered alement from the Smith set)
+# cuch that U+W and V+W fulfills the constraints.
 # Requires realIrr( G ) and determineConstraints( G ) to be called earlier.
-saveConstraintsAsSAGEFile := function( savePath, smithSetElement, G )
+saveConstraintsAsSAGEFile := function( savePath, smithSetElement, G, minDimension )
 	local constraint, i, j, U, V, Ux, Vx, P, H, dimP, dimH, rhs;
 	U := [];
 	V := [];
@@ -475,11 +488,11 @@ saveConstraintsAsSAGEFile := function( savePath, smithSetElement, G )
 	AppendTo( savePath, "\n#Constraints from condition 2\n" );
 	for j in [1..Size( pSubgroups )] do
 		appendConstraint2( savePath, j, (true), j, Ux, G );
-		appendConstraint2( savePath, j, (true), j, Vx, G );		
+		appendConstraint2( savePath, j, (true), j, Vx, G );
 	od;
 	for j in [1..Size( pseudocyclicSubgroups )] do
 		appendConstraint2( savePath, j+Size( pSubgroups ), false, j, Ux, G );
-		appendConstraint2( savePath, j+Size( pSubgroups ), false, j, Vx, G );		
+		appendConstraint2( savePath, j+Size( pSubgroups ), false, j, Vx, G );
 	od;
 	AppendTo( savePath, "\n#Constraints from condition 3\n" );
 	for j in [1..Size( constraintsCondition3 )] do
@@ -491,6 +504,20 @@ saveConstraintsAsSAGEFile := function( savePath, smithSetElement, G )
 		appendConstraint4( savePath, j, Ux, G );
 		appendConstraint4( savePath, j, Vx, G );
 	od;
+	AppendTo( savePath, "\n#Constraint for minimal dimension of W\n" );
+	AppendTo( savePath, "equationSystem.add_constraint( " );
+	for i in [1..Size( realIrreducibles )-1] do
+		AppendTo( savePath, realIrreducibles[i][1] );
+		AppendTo( savePath, "*x[" );
+		AppendTo( savePath, i-1 );
+		AppendTo( savePath, "]+" );
+	od;
+	AppendTo( savePath, realIrreducibles[Size( realIrreducibles )][1] );
+	AppendTo( savePath, "*x[" );
+	AppendTo( savePath, Size( realIrreducibles )-1 );
+	AppendTo( savePath, "] >= ");
+	AppendTo( savePath, minDimension );
+	AppendTo( savePath, " )" );
 	AppendTo( savePath, "\n\nequationSystem.set_objective( " );
 	for i in [1..Size( realIrreducibles )-1] do
 		AppendTo( savePath, realIrreducibles[i][1] );
@@ -501,17 +528,19 @@ saveConstraintsAsSAGEFile := function( savePath, smithSetElement, G )
 	AppendTo( savePath, realIrreducibles[Size( realIrreducibles )][1] );
 	AppendTo( savePath, "*x[" );
 	AppendTo( savePath, Size( realIrreducibles )-1 );
-	AppendTo( savePath, "] )\n\nequationSystem.show()\n" );
-	AppendTo( savePath, "\n\nprint( \'Objective Value: {}\'.format( equationSystem.solve() ) )\n" );
-	AppendTo( savePath, "for i, v in sorted( equationSystem.get_values( x ).items()):\n" );
-	AppendTo( savePath, "\tprint( \'w_\%s = \%s\' \% (i, int( round( v ) )) )" );
+	AppendTo( savePath, "] )\n\n# Results of the above integer linear porgramming problem\nobjectiveValue = equationSystem.solve()" );
+	AppendTo( savePath, "\nobjectiveCoordinates = sorted( equationSystem.get_values( x ).items() )" );
+	AppendTo( savePath, "\n\n#Uncomment the following lines for more desciptive output,\n#equationSystem.show()\n" );
+	AppendTo( savePath, "\n#print( \'Objective Value: {}\'.format( equationSystem.solve() ) )\n" );
+	AppendTo( savePath, "#for i, v in sorted( equationSystem.get_values( x ).items()):\n" );
+	AppendTo( savePath, "#\tprint( \'w_\%s = \%s\' \% (i, int( round( v ) )) )" );
 end;
 
 # EXAMPLE
-G := SL( 2, 5 );
-realIrr( G );
-determineConstraints( G );
-saveConstraintsAsSAGEFile( "C:\\Users\\Piotrek\\Desktop\\test.sage", [-1,1,2,-2,0,0,0,0], G );
+#G := SL( 2, 5 );
+#realIrr( G );
+#determineConstraints( G );
+#saveConstraintsAsSAGEFile( "C:\\Users\\Piotrek\\Desktop\\test.sage", [-1,1,2,-2,0,0,0,0], G );
 
 # REFERENCES
 # [1] M. Morimoto, K. Pawałowski, Smooth actions of finite Oliver groups on spheres,

@@ -1,9 +1,10 @@
 # Functions responsible for determining all the real modules of a group G of a given dimension.
 
 # To load this file paste this line (change the directory if necessary),
-# Read( Filename( DirectoryDesktop(), "realModulesGivenDimension.g" ) );
+# Read( Filename( [DirectoryCurrent(), DirectoryDesktop()], "realModulesGivenDimension.g" ) );
 
-Read( Filename( DirectoryDesktop(), "commonFunctions.g" ) );
+# Requires "commonFunctions.g" to be called earlier. It can be called with the following command,
+# Read( Filename( [DirectoryCurrent(), DirectoryDesktop()], "commonFunctions.g" ) );
 
 # Global variables
 realModulesGivenDimension := []; # RG-modules of a given dimension
@@ -45,8 +46,8 @@ end;
 # It saves the result in the global variable "realModulesGivenDimension".
 # Requires realIrr( G ) to be called earlier.
 realModulesOfDimension := function( dim )
-	local restrictedPartitions, numberInPartitionDim, n, partition, summand, summands, 
-		  restrictions, set, ir, resTup, restup, unTup, uT, result, realModule, 
+	local restrictedPartitions, numberInPartitionDim, n, partition, summand, summands,
+		  restrictions, set, ir, resTup, restup, unTup, uT, result, realModule,
 		  multiplicities, tempModule, temp, temp2, i;
 	numberInPartitionDim := [];
 	restrictedPartitions := RestrictedPartitions( dim, dimensionsRealModules );
