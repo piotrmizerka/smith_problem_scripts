@@ -198,7 +198,7 @@ end;
 # Requires realIrr( G ), determineElementsOfPrimePowerOrder( G ) and
 # determineComplexIrreducibleRepresentations( G ) to be called earlier.
 verifyPOrientabilityModule := function( U, W, G )
-	local g, determinant, component, characterUW, i, coefficients, complexIrrRep;
+	local g, determinant, component, characterUW, i, coefficients, complexIrrRep, cl, H, NGP;
 	characterUW := [];
 	for i in [1..Size( realIrreducibles[1] )] do
 		Add( characterUW, 0 );
@@ -214,16 +214,22 @@ verifyPOrientabilityModule := function( U, W, G )
 		od;
 	od;
 	coefficients := SolutionMat( complexIrreducibles, characterUW );
-	i := 1;
-	for g in elementsOfPrimePowerOrder do
-		determinant := 1;
-		for complexIrrRep in complexIrreducibleRepresentations do
-			determinant := determinant*DeterminantMat( Image( complexIrrRep, g ) )^coefficients[i];
-		od;
-		if determinant < 0 then
-			return false;
+	for cl in ConjugacyClassesSubgroups( G ) do
+		H := Representative( cl );
+		if IsPGroup( H ) then
+			NGP := Normalizer( G, H );
+			for g in NGP do
+				determinant := 1;
+				i := 1;
+				for complexIrrRep in complexIrreducibleRepresentations do
+					determinant := determinant*DeterminantMat( Image( complexIrrRep, g ) )^coefficients[i];
+					i := i+1;
+				od;
+				if determinant < 0 then
+					return false;
+				fi;
+			od;
 		fi;
-		i := i+1;
 	od;
 	return true;
 end;

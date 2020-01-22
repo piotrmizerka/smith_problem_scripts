@@ -1,6 +1,6 @@
 # Complex character table
 
-CT1
+CT28
 
      2  3   1   1  3   1   1  1  1  2
      3  1   .   .  1   .   .  1  1  .

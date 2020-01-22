@@ -4,9 +4,9 @@ import prettytable
 from prettytable import PrettyTable
 
 # Global variables necessary for running the program
-#objectiveValuex = [0]*100
-#objectiveCoordinatesx = [0]*100
-#suitableSmithPairsIds = [False]*100
+objectiveValuex = [0]*100
+objectiveCoordinatesx = [0]*100
+suitableSmithPairsIds = [False]*100
 
 def saveConstraints( minDimensionWToConsiderId, constraintsMinDimensions, latticePointsRedPONumber ):
     constraintsMinDimensions = [0]*latticePointsRedPONumber
